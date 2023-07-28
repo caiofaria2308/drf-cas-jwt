@@ -8,27 +8,5 @@ if sys.version_info < (3, 6):
 from setuptools import setup
 
 setup(
-    name="drf_cas_jwt",
-    version="0.1.0",
-    author="Caio de Faria",
-    author_email="caiofaria2308@gmail.com",
-    url="https://github.com/caiofaria2308/drf-cas-jwt",
     packages=find_packages(exclude=["ez_setup", "examples", "tests", "release"]),
-    install_requires=[
-        "Django>=2.0",
-        "setuptools>=65.5.1",
-        "django-cas-ng>=4.1.1",
-        "djangorestframework-simplejwt>=4.6.0",
-        "django-user-agents>=0.4.0",
-        "pyyaml>=5.4.1",
-        "ua-parser>=0.18.0",
-        "user-agents>=2.2.0",
-    ],
-    include_package_data=True,
-    zip_safe=False,
-    classifiers=[
-        "Programming Language :: Python :: 3",
-        "License :: OSI Approved :: MIT License",
-        "Operating System :: OS Independent",
-    ],
 )

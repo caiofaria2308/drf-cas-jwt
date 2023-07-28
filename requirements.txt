@@ -5,3 +5,4 @@ django-user-agents>=0.4.0
 pyyaml>=5.4.1
 ua-parser>=0.18.0
 user-agents>=2.2.0
+Django>=2.2.28
