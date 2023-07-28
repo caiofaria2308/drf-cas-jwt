@@ -1,0 +1,11 @@
+[build-system]
+requires = [
+    'setuptools>=40.8.0',
+    'django-cas-ng>=4.1.1',
+    'djangorestframework-simplejwt>=4.6.0',
+    'django-user-agents>=0.4.0',
+    'pyyaml>=5.4.1',
+    'ua-parser>=0.18.0',
+    'user-agents>=2.2.0'
+]
+build-backend = 'setuptools.build_meta'
