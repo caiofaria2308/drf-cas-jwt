@@ -8,7 +8,6 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     initial = True
 
     dependencies = [
@@ -17,31 +16,73 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Device',
+            name="Device",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False)),
-                ('name', models.CharField(max_length=64)),
-                ('type', models.CharField(choices=[('mobile', 'Mobile'), ('tablet', 'Tablet'), ('touch_capable', 'Touch Capable'), ('pc', 'PC'), ('bot', 'BOT')], max_length=16)),
-                ('browser_family', models.CharField(max_length=64)),
-                ('browser_version', models.CharField(max_length=64)),
-                ('os_family', models.CharField(max_length=64)),
-                ('os_version', models.CharField(max_length=64)),
-                ('user', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to=settings.AUTH_USER_MODEL)),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, primary_key=True, serialize=False
+                    ),
+                ),
+                ("name", models.CharField(max_length=64)),
+                (
+                    "type",
+                    models.CharField(
+                        choices=[
+                            ("mobile", "Mobile"),
+                            ("tablet", "Tablet"),
+                            ("touch_capable", "Touch Capable"),
+                            ("pc", "PC"),
+                            ("bot", "BOT"),
+                        ],
+                        max_length=16,
+                    ),
+                ),
+                ("browser_family", models.CharField(max_length=64)),
+                ("browser_version", models.CharField(max_length=64)),
+                ("os_family", models.CharField(max_length=64)),
+                ("os_version", models.CharField(max_length=64)),
+                (
+                    "user",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to=settings.AUTH_USER_MODEL,
+                    ),
+                ),
             ],
         ),
         migrations.CreateModel(
-            name='Token',
+            name="Token",
             fields=[
-                ('id', models.UUIDField(default=uuid.uuid4, primary_key=True, serialize=False)),
-                ('ip', models.GenericIPAddressField()),
-                ('token', models.CharField(max_length=32, verbose_name='Token JWT (Criptografado)')),
-                ('created_at', models.DateTimeField(auto_now_add=True)),
-                ('updated_at', models.DateTimeField(auto_now=True)),
-                ('deleted_at', models.DateTimeField(blank=True, db_index=True, null=True)),
-                ('device', models.ForeignKey(on_delete=django.db.models.deletion.CASCADE, to='drf_cas_jwt.Device')),
+                (
+                    "id",
+                    models.UUIDField(
+                        default=uuid.uuid4, primary_key=True, serialize=False
+                    ),
+                ),
+                ("ip", models.GenericIPAddressField()),
+                (
+                    "token",
+                    models.CharField(
+                        max_length=32, verbose_name="Token JWT (Criptografado)"
+                    ),
+                ),
+                ("created_at", models.DateTimeField(auto_now_add=True)),
+                ("updated_at", models.DateTimeField(auto_now=True)),
+                (
+                    "deleted_at",
+                    models.DateTimeField(blank=True, db_index=True, null=True),
+                ),
+                (
+                    "device",
+                    models.ForeignKey(
+                        on_delete=django.db.models.deletion.CASCADE,
+                        to="drf_cas_jwt.Device",
+                    ),
+                ),
             ],
             options={
-                'unique_together': {('token', 'device')},
+                "unique_together": {("token", "device")},
             },
         ),
     ]

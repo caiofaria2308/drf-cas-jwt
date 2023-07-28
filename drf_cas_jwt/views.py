@@ -36,7 +36,7 @@ class CasLogin(cas_views.LoginView):
         """
         if not request.GET.get("ticket"):
             logout_django(request)
-            next_page = f"{drf_settings.CAS_JWT_LOGIN_REDIRECT}"
+            next_page = drf_settings.CAS_JWT_LOGIN_REDIRECT
             return HttpResponseRedirect(
                 f"{drf_settings.CAS_JWT_LOGOUT_REDIRECT}?next={next_page}"
             )
