@@ -17,11 +17,12 @@ Quick start
         "drf_cas_jwt",
     ]
 
-2. Add "UserAgentMiddleware" to your MIDDLEWARE setting like this::
+2. Add "UserAgentMiddleware" before "AuthenticationMiddleware" to your MIDDLEWARE setting like this::
 
     MIDDLEWARE = [
         ...,
         "django_user_agents.middleware.UserAgentMiddleware",
+        "django.contrib.auth.middleware.AuthenticationMiddleware",
     ]
 
 3. Set the variable CAS_JWT_LOGOUT_REDIRECT and CAS_JWT_LOGIN_REDIRECT in settings.py
