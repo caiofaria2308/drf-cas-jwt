@@ -17,7 +17,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_cas_jwt',
-    
+
     # Agendamento
     'django_rq',
     'django_crontab',
@@ -45,7 +45,7 @@ DRF_CAS_JWT_AUDIT_RETENTION_DAYS = 90
 CRONJOBS = [
     # Limpeza completa diariamente às 2:00 AM
     ('0 2 * * *', 'drf_cas_jwt.tasks.cleanup_expired_tokens', '>> /var/log/drf_cas_jwt_cleanup.log'),
-    
+
     # OU separado por tipo:
     ('0 2 * * 0', 'drf_cas_jwt.tasks.cleanup_expired_tokens'),       # Semanal (domingo)
     ('0 3 * * *', 'drf_cas_jwt.tasks.cleanup_old_audit_logs'),       # Diário
@@ -66,7 +66,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_cas_jwt',
-    
+
     # Agendamento
     'django_q',
 ]
@@ -101,7 +101,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'drf_cas_jwt',
-    
+
     # Task queue
     'celery',
 ]
