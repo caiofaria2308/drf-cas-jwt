@@ -1,11 +1,11 @@
+import hmac
 import hashlib
 
 from django.utils.translation import gettext_lazy as _
-from django_user_agents.utils import get_user_agent
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
 from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .models import Token, Device
+from .models import Token
 
 
 class CasJwtAuthentication(JWTAuthentication):
@@ -19,18 +19,25 @@ class CasJwtAuthentication(JWTAuthentication):
         user = authenticate[0]
         validated_token = authenticate[1]
 
-        device_data = get_user_agent(request)
-        device = Device.objects.filter(
-            name=device_data.device.family,
+        # Hash do token com HMAC-SHA256
+        from django.conf import settings
+        server_secret = settings.SECRET_KEY
+        token_hash = hmac.new(
+            server_secret.encode(),
+            str(validated_token).encode(),
+            hashlib.sha256
+        ).hexdigest()
+
+        # Validar que existe registro de token persistido
+        token_record = Token.objects.filter(
             user=user,
-            os_family=device_data.os.family,
-            browser_family=device_data.browser.family,
-        )
-        token = hashlib.md5(str(validated_token).encode()).hexdigest()
-        token = Token.objects.filter(device__in=device, token=token)
-        if token.exists():
-            return user, validated_token
-        raise AuthenticationFailed(
-            _("Token Not Valid"),
-            code="bad_authorization_header",
-        )
+            token=token_hash
+        ).first()
+
+        if not token_record:
+            raise AuthenticationFailed(
+                _("Token Not Valid"),
+                code="bad_authorization_header",
+            )
+
+        return user, validated_token

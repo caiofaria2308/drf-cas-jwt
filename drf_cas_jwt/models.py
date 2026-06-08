@@ -9,35 +9,19 @@ from .managers import SoftDeleteManager, SoftDeleteManagerAdmin
 User = get_user_model()
 
 
-class Device(models.Model):
-    MOBILE = "mobile"
-    TABLET = "tablet"
-    TOUCH_CAPABLE = "touch_capable"
-    PC = "pc"
-    BOT = "bot"
-    TYPE_CHOICES = (
-        (MOBILE, "Mobile"),
-        (TABLET, "Tablet"),
-        (TOUCH_CAPABLE, "Touch Capable"),
-        (PC, "PC"),
-        (BOT, "BOT"),
-    )
-
-    id = models.UUIDField(primary_key=True, default=uuid4)
-    name = models.CharField(max_length=64)
-    type = models.CharField(choices=TYPE_CHOICES, max_length=16)
-    browser_family = models.CharField(max_length=64)
-    browser_version = models.CharField(max_length=64)
-    os_family = models.CharField(max_length=64)
-    os_version = models.CharField(max_length=64)
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
-
-
 class Token(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4)
+    jti = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+        null=True,
+        blank=True,
+        help_text="JWT ID (jti claim) para rastreamento de refresh tokens"
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
     ip = models.GenericIPAddressField()
-    token = models.CharField(max_length=32, verbose_name="Token JWT (Criptografado)")
-    device = models.ForeignKey(Device, on_delete=models.CASCADE)
+    token = models.CharField(max_length=64, verbose_name="Token JWT (HMAC-SHA256)")
     created_at = models.DateTimeField(auto_now_add=True)
     updated_at = models.DateTimeField(auto_now=True)
     deleted_at = models.DateTimeField(null=True, blank=True, db_index=True)
@@ -46,7 +30,10 @@ class Token(models.Model):
     admin_objects = SoftDeleteManagerAdmin()
 
     class Meta:
-        unique_together = ("token", "device")
+        indexes = [
+            models.Index(fields=['user', 'deleted_at']),
+            models.Index(fields=['jti', 'deleted_at']),
+        ]
 
     def delete(self, hard_delete=False, *args, **kwargs):
         if hard_delete:
@@ -54,3 +41,91 @@ class Token(models.Model):
 
         self.deleted_at = timezone.now()
         self.save()
+
+
+class RefreshTokenFamily(models.Model):
+    """
+    Rastreia família de refresh tokens para detecção de reuse e rotação.
+    Cada refresh token gera um jti único; ao renovar, um novo jti é criado.
+    Se um jti antigo reaparece, a cadeia inteira é revogada.
+    """
+
+    jti = models.CharField(
+        max_length=255,
+        unique=True,
+        db_index=True,
+        help_text="JWT ID (jti claim) do refresh token"
+    )
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    parent_jti = models.CharField(
+        max_length=255,
+        null=True,
+        blank=True,
+        help_text="jti do refresh anterior (se foi rotacionado)"
+    )
+    ip = models.GenericIPAddressField()
+    created_at = models.DateTimeField(auto_now_add=True)
+    rotated_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Data quando esse jti foi rotacionado para um novo"
+    )
+    revoked_at = models.DateTimeField(
+        null=True,
+        blank=True,
+        help_text="Data da revogação por reuse ou outro motivo"
+    )
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'revoked_at']),
+            models.Index(fields=['jti', 'revoked_at']),
+        ]
+
+    def __str__(self):
+        return f"RefreshTokenFamily({self.user_id}, {self.jti[:8]}...)"
+
+
+class TokenAuditLog(models.Model):
+    """
+    Log de eventos de autenticação para auditoria e detecção de anomalias.
+    """
+
+    EVENT_CHOICES = (
+        ('LOGIN', 'Login'),
+        ('LOGOUT', 'Logout'),
+        ('REFRESH', 'Token Refresh'),
+        ('REFRESH_DENIED', 'Refresh Negado'),
+        ('AUTH_DENIED', 'Autenticação Negada'),
+        ('REUSE_DETECTED', 'Reuse de Refresh Detectado'),
+    )
+
+    REASON_CHOICES = (
+        ('invalid_token', 'Token Inválido'),
+        ('token_reuse', 'Reuse de Token'),
+        ('rate_limit', 'Rate Limit Excedido'),
+        ('expired', 'Token Expirado'),
+        ('device_mismatch', 'Device Não Corresponde'),
+        ('success', 'Sucesso'),
+    )
+
+    id = models.UUIDField(primary_key=True, default=uuid4)
+    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    event = models.CharField(max_length=20, choices=EVENT_CHOICES)
+    reason = models.CharField(
+        max_length=30,
+        choices=REASON_CHOICES,
+        default='success'
+    )
+    ip = models.GenericIPAddressField()
+    user_agent = models.TextField(blank=True, null=True)
+    created_at = models.DateTimeField(auto_now_add=True)
+
+    class Meta:
+        indexes = [
+            models.Index(fields=['user', 'created_at']),
+            models.Index(fields=['event', 'created_at']),
+        ]
+
+    def __str__(self):
+        return f"{self.user_id} - {self.event} ({self.reason})"
