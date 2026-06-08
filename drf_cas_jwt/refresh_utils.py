@@ -41,7 +41,7 @@ def mark_as_rotated(old_jti):
 
 
 @transaction.atomic
-def detect_and_revoke_reuse(jti, user):
+def detect_and_revoke_reuse(jti, user, ip='', user_agent=''):
     """
     Detecta se um refresh token foi reutilizado (replay) e revoga a cadeia inteira.
 
@@ -50,6 +50,8 @@ def detect_and_revoke_reuse(jti, user):
 
     :param jti: JWT ID do refresh token
     :param user: Django User
+    :param ip: IP address (para audit log)
+    :param user_agent: User-Agent (para audit log)
     :return: tuple (is_reuse: bool, family: RefreshTokenFamily or None)
     """
     try:
@@ -64,12 +66,13 @@ def detect_and_revoke_reuse(jti, user):
                 revoked_at__isnull=True
             ).update(revoked_at=timezone.now())
 
-            # Log do evento
+            # Log do evento com detalhes de IP e user_agent
             log_token_event(
                 user=user,
                 event='REUSE_DETECTED',
                 reason='token_reuse',
-                ip='',  # IP não disponível neste contexto
+                ip=ip,
+                user_agent=user_agent,
             )
 
             return True, token_family
