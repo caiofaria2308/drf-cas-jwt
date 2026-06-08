@@ -1,16 +1,15 @@
 import hashlib
 
 from django.conf import settings
-from django.contrib.auth import logout as logout_django
-from django.contrib.auth.models import update_last_login
 from django.http import HttpRequest, HttpResponse, HttpResponseRedirect
-from django.utils.translation import gettext_lazy as _
 from django_cas_ng import views as cas_views
-from django_user_agents.utils import get_user_agent
+from django.contrib.auth import logout as logout_django
 from rest_framework.views import APIView
+from django_user_agents.utils import get_user_agent
+from django.contrib.auth.models import update_last_login
 from rest_framework_simplejwt.tokens import RefreshToken
 
-from .models import Device, Token
+from .models import Token, Device
 from .settings import settings as drf_settings
 
 

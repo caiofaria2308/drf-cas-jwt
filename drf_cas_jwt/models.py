@@ -1,9 +1,8 @@
 from uuid import uuid4
 
-from django.contrib.auth import get_user_model
 from django.db import models
 from django.utils import timezone
-from django_cas_ng.models import SessionTicket
+from django.contrib.auth import get_user_model
 
 from .managers import SoftDeleteManager, SoftDeleteManagerAdmin
 

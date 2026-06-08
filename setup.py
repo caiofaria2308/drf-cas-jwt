@@ -1,12 +1,17 @@
 import sys
 
-from setuptools import find_packages, setup
+from setuptools import setup, find_packages
 
-if sys.version_info < (3, 6):
-    raise Exception("Only Python 3.6+ is supported")
+if sys.version_info < (3, 12):
+    raise Exception("Only Python 3.12+ is supported")
 
-from setuptools import setup
 
 setup(
-    packages=find_packages(exclude=["ez_setup", "examples", "tests", "release"]),
+    name="drf-cas-jwt",
+    version="0.2.0",
+    author="Caio de Faria",
+    author_email="caiofaria2308@gmail.com",
+    packages=find_packages(
+        exclude=["ez_setup", "examples", "tests", "release"]
+    ),
 )

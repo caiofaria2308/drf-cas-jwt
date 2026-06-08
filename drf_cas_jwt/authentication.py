@@ -2,10 +2,10 @@ import hashlib
 
 from django.utils.translation import gettext_lazy as _
 from django_user_agents.utils import get_user_agent
-from rest_framework_simplejwt.authentication import JWTAuthentication
 from rest_framework_simplejwt.exceptions import AuthenticationFailed
+from rest_framework_simplejwt.authentication import JWTAuthentication
 
-from .models import Device, Token
+from .models import Token, Device
 
 
 class CasJwtAuthentication(JWTAuthentication):
