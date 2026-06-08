@@ -7,6 +7,8 @@ from django_cas_ng import views as cas_views
 from rest_framework import status
 from django.contrib.auth import logout as logout_django
 from rest_framework.views import APIView
+from django.middleware.csrf import CsrfViewMiddleware
+from django.middleware.csrf import get_token as get_csrf_token
 from rest_framework.response import Response
 from django.contrib.auth.models import update_last_login
 from rest_framework_simplejwt.tokens import RefreshToken
@@ -23,6 +25,8 @@ from .refresh_utils import (
     detect_and_revoke_reuse,
     create_refresh_token_family,
 )
+
+_csrf_middleware = CsrfViewMiddleware(get_response=lambda r: None)
 
 
 def get_ipaddress(request):
@@ -105,6 +109,10 @@ class CasLogin(cas_views.LoginView):
             user_agent=request.META.get('HTTP_USER_AGENT', ''),
         )
 
+        # Enviar alerta de login (para destinatários com notify_on_login=True)
+        from .alerts import send_login_alert
+        send_login_alert(user=user, ip=ip, user_agent=request.META.get('HTTP_USER_AGENT', ''))
+
         # For admin endpoints, redirect with tokens (legacy)
         if "/admin" in next_page:
             bracket = "" if settings.FRONTEND_AUTH_REDIRECT[-1] == "/" else "/"
@@ -123,6 +131,9 @@ class CasLogin(cas_views.LoginView):
                 'email': user.email,
             }
         })
+
+        # Garantir que o cookie CSRF seja emitido para SPAs (v1.2.0)
+        get_csrf_token(request)
 
         # Set refresh token as HttpOnly secure cookie
         response.set_cookie(
@@ -191,10 +202,13 @@ class CasLogout(APIView):
 
 class CasTokenRefreshView(APIView):
     """
-    Endpoint de renovação de tokens (v1.0.1).
+    Endpoint de renovação de tokens (v1.0.1+).
 
     Lê o refresh_token do cookie HttpOnly, valida, detecta reuse, rotaciona
     e retorna novo access_token + atualiza cookie com novo refresh_token.
+
+    Proteção CSRF (v1.2.0): valida o header X-CSRFToken contra o cookie csrftoken
+    como camada adicional além de SameSite=Strict.
 
     POST /auth/token/refresh/
     (sem body — refresh_token enviado automaticamente pelo navegador via cookie)
@@ -213,6 +227,14 @@ class CasTokenRefreshView(APIView):
         """
         ip = get_ipaddress(request)
         user_agent = request.META.get('HTTP_USER_AGENT', '')
+
+        # CSRF validation (v1.2.0) — defense-in-depth além do SameSite=Strict
+        csrf_error = _csrf_middleware.process_view(request._request, None, (), {})
+        if csrf_error is not None:
+            return Response(
+                {'detail': 'CSRF token inválido ou ausente.'},
+                status=status.HTTP_403_FORBIDDEN,
+            )
 
         refresh_token_str = request.COOKIES.get('refresh_token')
         if not refresh_token_str:

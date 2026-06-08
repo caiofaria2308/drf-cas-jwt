@@ -50,10 +50,13 @@ def detect_and_revoke_reuse(jti, user, ip='', user_agent=''):
 
     :param jti: JWT ID do refresh token
     :param user: Django User
-    :param ip: IP address (para audit log)
-    :param user_agent: User-Agent (para audit log)
+    :param ip: IP address (para audit log e alerta)
+    :param user_agent: User-Agent (para audit log e alerta)
     :return: tuple (is_reuse: bool, family: RefreshTokenFamily or None)
     """
+    from .alerts import send_reuse_alert
+    from .anomaly import compute_anomaly_score
+
     try:
         token_family = RefreshTokenFamily.objects.get(jti=jti, user=user)
 
@@ -73,6 +76,15 @@ def detect_and_revoke_reuse(jti, user, ip='', user_agent=''):
                 reason='token_reuse',
                 ip=ip,
                 user_agent=user_agent,
+            )
+
+            # Calcular score de anomalia e enviar alerta por email
+            anomaly_score = compute_anomaly_score(user, ip) if ip else None
+            send_reuse_alert(
+                user=user,
+                ip=ip,
+                user_agent=user_agent,
+                anomaly_score=anomaly_score,
             )
 
             return True, token_family

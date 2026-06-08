@@ -1,6 +1,6 @@
 from django.contrib import admin
 
-from .models import Token, TokenAuditLog, RefreshTokenFamily
+from .models import Token, TokenAuditLog, RefreshTokenFamily, SecurityAlertRecipient
 
 
 @admin.register(Token)
@@ -59,3 +59,19 @@ class TokenAuditLogAdmin(admin.ModelAdmin):
 
     def has_delete_permission(self, request, obj=None) -> bool:
         return False
+
+
+@admin.register(SecurityAlertRecipient)
+class SecurityAlertRecipientAdmin(admin.ModelAdmin):
+    list_display = [
+        "email", "user", "is_active",
+        "notify_on_reuse", "notify_on_rate_limit", "notify_on_login", "created_at",
+    ]
+    list_display_links = ["email"]
+    list_filter = ["is_active", "notify_on_reuse", "notify_on_rate_limit", "notify_on_login"]
+    search_fields = ["email", "user__username"]
+    ordering = ["email"]
+    fields = [
+        "user", "email", "is_active",
+        "notify_on_reuse", "notify_on_rate_limit", "notify_on_login",
+    ]

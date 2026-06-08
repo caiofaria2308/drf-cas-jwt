@@ -129,3 +129,55 @@ class TokenAuditLog(models.Model):
 
     def __str__(self):
         return f"{self.user_id} - {self.event} ({self.reason})"
+
+
+class SecurityAlertRecipient(models.Model):
+    """
+    Configura quais usuários/emails recebem alertas de segurança.
+
+    Pode ser vinculado a um User existente (campo user) ou ser um email
+    externo de monitoramento (somente campo email).
+    """
+
+    user = models.OneToOneField(
+        User,
+        on_delete=models.CASCADE,
+        null=True,
+        blank=True,
+        related_name='alert_recipient',
+        help_text="Usuário Django associado (opcional)"
+    )
+    email = models.EmailField(
+        unique=True,
+        help_text="Email que receberá os alertas"
+    )
+    is_active = models.BooleanField(
+        default=True,
+        help_text="Desabilitar sem excluir o registro"
+    )
+
+    # Preferências de notificação
+    notify_on_reuse = models.BooleanField(
+        default=True,
+        help_text="Alertar quando reuse de refresh token for detectado"
+    )
+    notify_on_rate_limit = models.BooleanField(
+        default=False,
+        help_text="Alertar quando rate limit for excedido por um usuário"
+    )
+    notify_on_login = models.BooleanField(
+        default=False,
+        help_text="Alertar a cada login (útil para contas sensíveis)"
+    )
+
+    created_at = models.DateTimeField(auto_now_add=True)
+    updated_at = models.DateTimeField(auto_now=True)
+
+    class Meta:
+        verbose_name = "Destinatário de Alertas de Segurança"
+        verbose_name_plural = "Destinatários de Alertas de Segurança"
+
+    def __str__(self):
+        if self.user:
+            return f"AlertRecipient({self.user.username} → {self.email})"
+        return f"AlertRecipient({self.email})"
