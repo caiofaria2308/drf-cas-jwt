@@ -152,11 +152,49 @@ class CasLogin(cas_views.LoginView):
 class CasLogout(APIView):
     """
     Logout endpoint: revokes token and refresh token family.
-    POST autenticado + idempotente.
+    Suporta POST (autenticado com bearer token) e GET (para integração legada).
     """
 
     authentication_classes = []
     permission_classes = []
+
+    def get(self, request, format=None):
+        """
+        Logout via GET: para integração com sistemas legados (Django admin, etc).
+        Faz logout da sessão do usuário e redireciona.
+        Sempre retorna sucesso (idempotente).
+
+        :param request: HTTP request
+        :param format: Response format
+        :return: HTTP response com redirecionamento
+        """
+        try:
+            # Se há um usuário autenticado, revoga sua sessão
+            if request.user and request.user.is_authenticated:
+                user = request.user
+                # Tenta encontrar e deletar tokens associados
+                tokens = Token.objects.filter(user=user, deleted_at__isnull=True)
+                for token_record in tokens:
+                    if token_record.jti:
+                        revoke_token_family(token_record.jti)
+                    token_record.delete()
+
+                # Log logout
+                log_token_event(
+                    user=user,
+                    event='LOGOUT',
+                    reason='success',
+                    ip=get_ipaddress(request),
+                )
+        except Exception:
+            # Silently fail - logout is idempotent
+            pass
+
+        logout_django(request)
+
+        response = HttpResponseRedirect(drf_settings.CAS_JWT_LOGOUT_REDIRECT)
+        response.delete_cookie('refresh_token', path='/')
+        return response
 
     def post(self, request, format=None):
         """
