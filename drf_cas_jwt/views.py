@@ -120,17 +120,17 @@ class CasLogin(cas_views.LoginView):
                 f"{settings.FRONTEND_AUTH_REDIRECT}{bracket}"
                 f"{access_token}/{refresh_token}/"
             )
-            return HttpResponseRedirect(redirect_url)
-
-        # For frontend: set secure cookies + JSON response
-        response = Response({
-            'access_token': str(access_token),
-            'user': {
-                'id': user.id,
-                'username': user.username,
-                'email': user.email,
-            }
-        })
+            response = HttpResponseRedirect(redirect_url)
+        else:
+            # For frontend: set secure cookies + JSON response
+            response = Response({
+                'access_token': str(access_token),
+                'user': {
+                    'id': user.id,
+                    'username': user.username,
+                    'email': user.email,
+                }
+            })
 
         # Garantir que o cookie CSRF seja emitido para SPAs (v1.2.0)
         get_csrf_token(request)
