@@ -3,6 +3,7 @@ from uuid import uuid4
 from django.db import models
 from django.utils import timezone
 from django.contrib.auth import get_user_model
+from django.core.exceptions import ValidationError
 
 from .managers import SoftDeleteManager, SoftDeleteManagerAdmin
 
@@ -19,7 +20,7 @@ class Token(models.Model):
         blank=True,
         help_text="JWT ID (jti claim) para rastreamento de refresh tokens"
     )
-    user = models.ForeignKey(User, on_delete=models.CASCADE)
+    user = models.ForeignKey(User, on_delete=models.CASCADE, null=True)
     ip = models.GenericIPAddressField()
     token = models.CharField(max_length=64, verbose_name="Token JWT (HMAC-SHA256)")
     created_at = models.DateTimeField(auto_now_add=True)
@@ -34,6 +35,10 @@ class Token(models.Model):
             models.Index(fields=['user', 'deleted_at']),
             models.Index(fields=['jti', 'deleted_at']),
         ]
+
+    def clean(self):
+        if not self.user:
+            raise ValidationError("O campo 'user' é obrigatório para criar um Token.")
 
     def delete(self, hard_delete=False, *args, **kwargs):
         if hard_delete:
