@@ -1,3 +1,4 @@
+from datetime import timedelta
 import hmac
 import hashlib
 
@@ -139,7 +140,7 @@ class CasLogin(cas_views.LoginView):
         response.set_cookie(
             key='refresh_token',
             value=refresh_token,
-            max_age=settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME', 7 * 24 * 60 * 60).total_seconds(),
+            max_age=settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME', timedelta(days=1)).total_seconds(),
             httponly=True,
             secure=not settings.DEBUG,
             samesite='Strict',
@@ -150,7 +151,7 @@ class CasLogin(cas_views.LoginView):
         response.set_cookie(
             key='access_token',
             value=str(access_token),
-            max_age=settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME', 5 * 60).total_seconds(),
+            max_age=settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME', timedelta(minutes=5)).total_seconds(),
             httponly=True,
             secure=not settings.DEBUG,
             samesite='Strict',
@@ -404,7 +405,17 @@ class CasTokenRefreshView(APIView):
         response.set_cookie(
             key='refresh_token',
             value=str(new_refresh),
-            max_age=settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME', 7 * 24 * 60 * 60).total_seconds(),
+            max_age=settings.SIMPLE_JWT.get('REFRESH_TOKEN_LIFETIME', timedelta(days=1)).total_seconds(),
+            httponly=True,
+            secure=not settings.DEBUG,
+            samesite='Strict',
+            path='/',
+        )
+
+        response.set_cookie(
+            key='access_token',
+            value=str(new_access),
+            max_age=settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME', timedelta(minutes=5)).total_seconds(),
             httponly=True,
             secure=not settings.DEBUG,
             samesite='Strict',
