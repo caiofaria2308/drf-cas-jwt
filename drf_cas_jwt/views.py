@@ -146,6 +146,17 @@ class CasLogin(cas_views.LoginView):
             path='/',
         )
 
+        # Set access token as HttpOnly secure cookie (fallback para clientes que não enviam Authorization header)
+        response.set_cookie(
+            key='access_token',
+            value=str(access_token),
+            max_age=settings.SIMPLE_JWT.get('ACCESS_TOKEN_LIFETIME', 5 * 60).total_seconds(),
+            httponly=True,
+            secure=not settings.DEBUG,
+            samesite='Strict',
+            path='/',
+        )
+
         return response
 
 

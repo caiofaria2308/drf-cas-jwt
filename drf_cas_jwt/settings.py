@@ -1,11 +1,9 @@
 from django.conf import settings as dj_settings
-from rest_framework_simplejwt.settings import DEFAULTS as jwt_defaults
 
 DEFAULTS = {
     "CAS_JWT_LOGOUT_REDIRECT": "/",
     "CAS_JWT_LOGIN_REDIRECT": "/",
 }
-DEFAULTS.update(jwt_defaults)
 
 
 class Settings:
