@@ -41,6 +41,54 @@ def mark_as_rotated(old_jti):
 
 
 @transaction.atomic
+def revoke_token_family(jti):
+    """
+    Revoga toda a família conectada a um jti (ancestrais e descendentes).
+
+    A revogação fica restrita ao mesmo usuário do jti informado.
+
+    :param jti: JWT ID do refresh token
+    :return: int quantidade de registros atualizados
+    """
+    try:
+        token_family = RefreshTokenFamily.objects.get(jti=jti)
+    except RefreshTokenFamily.DoesNotExist:
+        return 0
+
+    user = token_family.user
+    to_visit = {jti}
+    visited = set()
+
+    # Percorre o grafo da família via parent_jti para incluir toda a cadeia.
+    while to_visit:
+        current = to_visit.pop()
+        if current in visited:
+            continue
+        visited.add(current)
+
+        parent = (
+            RefreshTokenFamily.objects
+            .filter(user=user, jti=current)
+            .values_list('parent_jti', flat=True)
+            .first()
+        )
+        if parent:
+            to_visit.add(parent)
+
+        children = RefreshTokenFamily.objects.filter(
+            user=user,
+            parent_jti=current,
+        ).values_list('jti', flat=True)
+        to_visit.update(children)
+
+    return RefreshTokenFamily.objects.filter(
+        user=user,
+        jti__in=visited,
+        revoked_at__isnull=True,
+    ).update(revoked_at=timezone.now())
+
+
+@transaction.atomic
 def detect_and_revoke_reuse(jti, user, ip='', user_agent=''):
     """
     Detecta se um refresh token foi reutilizado (replay) e revoga a cadeia inteira.
