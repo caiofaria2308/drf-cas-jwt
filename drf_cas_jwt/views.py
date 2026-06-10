@@ -291,8 +291,12 @@ class CasTokenRefreshView(APIView):
                 status=status.HTTP_401_UNAUTHORIZED,
             )
 
+        # user_id_field -> Field name in the User model that corresponds to the user_id_claim (default 'id')
+        user_id_field = settings.SIMPLE_JWT.get('USER_ID_FIELD', 'id')
+        # user_id_claim -> User identifier in the token payload (default 'user_id')
+        user_id_claim = settings.SIMPLE_JWT.get('USER_ID_CLAIM', 'user_id')
         old_jti = refresh.get('jti', None)
-        user_id = refresh.get('user_id', None)
+        user_id = refresh.get(user_id_claim, None)
 
         if not old_jti or not user_id:
             return Response(
@@ -304,7 +308,7 @@ class CasTokenRefreshView(APIView):
         User = get_user_model()
 
         try:
-            user = User.objects.get(pk=user_id)
+            user = User.objects.get(**{user_id_field: user_id})
         except User.DoesNotExist:
             return Response(
                 {'detail': 'Usuário não encontrado.'},
