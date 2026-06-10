@@ -114,20 +114,13 @@ class CasLogin(cas_views.LoginView):
         from .alerts import send_login_alert
         send_login_alert(user=user, ip=ip, user_agent=request.META.get('HTTP_USER_AGENT', ''))
 
-        redirect_target = next_page or drf_settings.CAS_JWT_LOGIN_REDIRECT
-
         # For admin endpoints, redirect with tokens in URL (legacy)
-        if "/admin" in redirect_target:
-            bracket = "" if settings.FRONTEND_AUTH_REDIRECT[-1] == "/" else "/"
-            redirect_url = (
-                f"{settings.FRONTEND_AUTH_REDIRECT}{bracket}"
-                f"{access_token}/{refresh_token}/"
-            )
-            response = HttpResponseRedirect(redirect_url)
-        else:
-            # For frontend: redirect back to requested page with auth cookies already set
-            response = HttpResponseRedirect(redirect_target)
-
+        bracket = "" if settings.FRONTEND_AUTH_REDIRECT[-1] == "/" else "/"
+        redirect_url = (
+            f"{settings.FRONTEND_AUTH_REDIRECT}{bracket}"
+            f"{access_token}/{refresh_token}/"
+        )
+        response = HttpResponseRedirect(redirect_url)
         # Garantir que o cookie CSRF seja emitido para SPAs (v1.2.0)
         get_csrf_token(request)
 
