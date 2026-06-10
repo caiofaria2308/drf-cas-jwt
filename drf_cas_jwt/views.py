@@ -128,7 +128,6 @@ class CasLogin(cas_views.LoginView):
                 'access_token': str(access_token),
                 'user': {
                     'id': user.id,
-                    'username': user.username,
                     'email': user.email,
                 }
             })

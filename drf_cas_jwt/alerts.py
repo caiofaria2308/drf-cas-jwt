@@ -79,11 +79,11 @@ def send_reuse_alert(user, ip, user_agent='', anomaly_score=None):
             f"\nRisco alto: {'Sim' if anomaly_score['is_high_risk'] else 'Não'}"
         )
 
-    subject = f"[DRF-CAS-JWT] ALERTA: Reuse de token detectado — {user.username}"
+    subject = f"[DRF-CAS-JWT] ALERTA: Reuse de token detectado — {user.email}"
     body = f"""
 ALERTA DE SEGURANÇA — Reuse de Refresh Token Detectado
 
-Usuário:    {user.username} (ID: {user.id})
+Usuário:    {user.id}
 Email:      {user.email}
 IP:         {ip}
 User-Agent: {user_agent or 'N/A'}
@@ -119,11 +119,11 @@ def send_rate_limit_alert(user, ip, action='refresh'):
         return
 
     timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S UTC')
-    subject = f"[DRF-CAS-JWT] ALERTA: Rate limit excedido — {user.username}"
+    subject = f"[DRF-CAS-JWT] ALERTA: Rate limit excedido — {user.email}"
     body = f"""
 ALERTA DE SEGURANÇA — Rate Limit Excedido
 
-Usuário: {user.username} (ID: {user.id})
+Usuário: {user.id}
 IP:      {ip}
 Ação:    {action}
 Horário: {timestamp}
@@ -151,11 +151,11 @@ def send_login_alert(user, ip, user_agent=''):
         return
 
     timestamp = timezone.now().strftime('%Y-%m-%d %H:%M:%S UTC')
-    subject = f"[DRF-CAS-JWT] Login detectado — {user.username}"
+    subject = f"[DRF-CAS-JWT] Login detectado — {user.email}"
     body = f"""
 Notificação de Login
 
-Usuário:    {user.username} (ID: {user.id})
+Usuário:    {user.id}
 Email:      {user.email}
 IP:         {ip}
 User-Agent: {user_agent or 'N/A'}

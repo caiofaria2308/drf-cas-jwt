@@ -81,7 +81,6 @@ Returns::
         "access_token": "eyJ0eXAiOiJKV1QiLCJhbGc...",
         "user": {
             "id": 1,
-            "username": "john.doe",
             "email": "john@example.com"
         }
     }

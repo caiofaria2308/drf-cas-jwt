@@ -184,5 +184,5 @@ class SecurityAlertRecipient(models.Model):
 
     def __str__(self):
         if self.user:
-            return f"AlertRecipient({self.user.username} → {self.email})"
+            return f"AlertRecipient({self.user.email} → {self.email})"
         return f"AlertRecipient({self.email})"
