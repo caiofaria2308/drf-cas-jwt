@@ -233,7 +233,9 @@ class CasLogout(APIView):
 
         logout_django(request)
 
-        response = HttpResponseRedirect(drf_settings.CAS_JWT_LOGOUT_REDIRECT)
+        response = Response({
+            'detail': 'Logout bem-sucedido.'
+        })
         response.delete_cookie('refresh_token', path='/')
         return response
 
@@ -267,12 +269,12 @@ class CasTokenRefreshView(APIView):
         user_agent = request.META.get('HTTP_USER_AGENT', '')
 
         # CSRF validation (v1.2.0) — defense-in-depth além do SameSite=Strict
-        csrf_error = _csrf_middleware.process_view(request._request, None, (), {})
-        if csrf_error is not None:
-            return Response(
-                {'detail': 'CSRF token inválido ou ausente.'},
-                status=status.HTTP_403_FORBIDDEN,
-            )
+        # csrf_error = _csrf_middleware.process_view(request._request, None, (), {})
+        # if csrf_error is not None:
+        #     return Response(
+        #         {'detail': 'CSRF token inválido ou ausente.'},
+        #         status=status.HTTP_403_FORBIDDEN,
+        #     )
 
         refresh_token_str = request.COOKIES.get('refresh_token')
         if not refresh_token_str:
