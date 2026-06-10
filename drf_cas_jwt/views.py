@@ -58,11 +58,11 @@ class CasLogin(cas_views.LoginView):
     def successful_login(self, request: HttpRequest, next_page: str) -> HttpResponse:
         """
         Successful login flow: create JWT tokens, hash + persist token,
-        register refresh token family, set cookies.
+        register refresh token family, set cookies and redirect.
 
         :param request: HTTP request
         :param next_page: Redirect URL after login
-        :return: HTTP response with tokens in cookies + JSON body
+        :return: HTTP redirect response with tokens in cookies
         """
         if not request.GET.get("ticket"):
             logout_django(request)
@@ -114,8 +114,10 @@ class CasLogin(cas_views.LoginView):
         from .alerts import send_login_alert
         send_login_alert(user=user, ip=ip, user_agent=request.META.get('HTTP_USER_AGENT', ''))
 
-        # For admin endpoints, redirect with tokens (legacy)
-        if "/admin" in next_page:
+        redirect_target = next_page or drf_settings.CAS_JWT_LOGIN_REDIRECT
+
+        # For admin endpoints, redirect with tokens in URL (legacy)
+        if "/admin" in redirect_target:
             bracket = "" if settings.FRONTEND_AUTH_REDIRECT[-1] == "/" else "/"
             redirect_url = (
                 f"{settings.FRONTEND_AUTH_REDIRECT}{bracket}"
@@ -123,14 +125,8 @@ class CasLogin(cas_views.LoginView):
             )
             response = HttpResponseRedirect(redirect_url)
         else:
-            # For frontend: set secure cookies + JSON response
-            response = Response({
-                'access_token': str(access_token),
-                'user': {
-                    'id': user.id,
-                    'email': user.email,
-                }
-            })
+            # For frontend: redirect back to requested page with auth cookies already set
+            response = HttpResponseRedirect(redirect_target)
 
         # Garantir que o cookie CSRF seja emitido para SPAs (v1.2.0)
         get_csrf_token(request)
